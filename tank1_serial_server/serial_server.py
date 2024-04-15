@@ -49,7 +49,7 @@ class SerialServer(Node):
                                               10)
 		self.subscriber # prevent unused variable warning
 		self.ser.reset_input_buffer()
-		self.get_logger().info("serial_server *V8 initialized @115200")
+		self.get_logger().info("serial_server *V10 initialized @115200")
 	def get_param_float(self, name):
 		try:
 			return float(self.get_parameter(name).get_parameter_value().double_value)
@@ -82,13 +82,17 @@ class SerialServer(Node):
 		self.get_logger().info("Topic received linear x = %3.2f" % (msg.linear.x))
 		self.dump_msg(msg)
 
+
 		"""Move Forward"""
 		if msg.linear.x > 0:
-			self.send_cmd(self.move_forward_cmd)
+			tmp = self.twist2Cmd(msg)
+			self.send_cmd("s%4.2f%s" % (tmp, self.move_forward_cmd))
+			#  self.send_cmd(self.move_forward_cmd)
 			self.recieve_cmd()
 		"""Move Backward"""
 		if msg.linear.x < 0:
-			self.send_cmd(self.move_backward_cmd)
+			tmp = self.twist2Cmd(msg)
+			self.send_cmd("s%4.2f%s" % (tmp, self.move_backward_cmd))
 			self.recieve_cmd()
 		"""Turn Left"""
 		if msg.angular.z == self.turn_left_vel:
@@ -104,7 +108,14 @@ class SerialServer(Node):
 			self.recieve_cmd()
 	def dump_msg(self, msg):
 		self.get_logger().info("L: %3.2fx %3.2fy %3.2fz  A: %3.2fx %3.2fy %3.2fz" % (msg.linear.x, msg.linear.y, msg.linear.z, msg.angular.x, msg.angular.y, msg.angular.z))
-
+	def twist2Cmd(self, msg):
+		tmp = msg.linear.x * 100
+		if(tmp > 500.0):
+			tmp = 500
+		elif(tmp < -500.0):
+			tmp = -500
+		return tmp
+	
 def main(args=None):
 	rclpy.init(args=args)
 	serial_server = SerialServer()
