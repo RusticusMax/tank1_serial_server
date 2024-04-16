@@ -82,27 +82,30 @@ class SerialServer(Node):
 		self.get_logger().info("Topic received linear x = %3.2f" % (msg.linear.x))
 		self.dump_msg(msg)
 
-
-		"""Move Forward"""
-		if msg.linear.x > 0:
-			tmp = self.twist2Cmd(msg)
-			self.send_cmd("s%4.2f%s" % (tmp, self.move_forward_cmd))
-			#  self.send_cmd(self.move_forward_cmd)
-			self.recieve_cmd()
-		"""Move Backward"""
-		if msg.linear.x < 0:
-			tmp = self.twist2Cmd(msg)
-			self.send_cmd("s%4.2f%s" % (tmp, self.move_backward_cmd))
-			self.recieve_cmd()
-		"""Turn Left"""
-		if msg.angular.z == self.turn_left_vel:
-			self.send_cmd(self.turn_left_cmd)
-			self.recieve_cmd()
-		"""Turn Right"""
-		if msg.angular.z == self.turn_right_vel:
-			self.send_cmd(self.turn_right_cmd)
-			self.recieve_cmd()	
-		"""Stop"""
+		cmd = "T%4.2f,%4.2f,%4.2f,%4.2f,%4.2f,%4.2f" % (msg.linear.x, msg.linear.y, msg.linear.z, msg.angular.x, msg.angular.y, msg.angular.z)
+		self.get_logger().info("Twist: " + cmd)
+		self.send_cmd(cmd)
+		self.recieve_cmd()
+		# """Move Forward"""
+		# if msg.linear.x > 0:
+		# 	tmp = self.twist2Cmd(msg)
+		# 	self.send_cmd("s%4.2f%s" % (tmp, self.move_forward_cmd))
+		# 	#  self.send_cmd(self.move_forward_cmd)
+		# 	self.recieve_cmd()
+		# """Move Backward"""
+		# if msg.linear.x < 0:
+		# 	tmp = self.twist2Cmd(msg)
+		# 	self.send_cmd("s%4.2f%s" % (tmp, self.move_backward_cmd))
+		# 	self.recieve_cmd()
+		# """Turn Left"""
+		# if msg.angular.z == self.turn_left_vel:
+		# 	self.send_cmd(self.turn_left_cmd)
+		# 	self.recieve_cmd()
+		# """Turn Right"""
+		# if msg.angular.z == self.turn_right_vel:
+		# 	self.send_cmd(self.turn_right_cmd)
+		# 	self.recieve_cmd()	
+		# """Stop"""
 		if msg == Twist():
 			self.send_cmd(self.stop_cmd)
 			self.recieve_cmd()
