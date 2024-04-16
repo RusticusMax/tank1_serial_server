@@ -64,6 +64,12 @@ class SerialServer(Node):
 		print("Sending: " + cmd)
 		self.ser.write(bytes(cmd,'utf-8'))
 	def recieve_cmd(self):
+		#NOTE: 
+		# For some reason, arduino sends back null byte (0b'' or Oxff) back after the first call to ser.write
+		# If the statement in "try" executes when this happens, it causes this error which crashes the program:
+		# UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte
+		# To prevent this, I added the try-except blocks to prevent the program from crashing
+		# If a null byte is sent, "except" is called which prevents the program from crashing
 		try:
 			#try normal way of recieving data
 			#sleep(.01) #sleep to allow time for serial_data to arrive. Otherwise this might return nothing
@@ -73,12 +79,6 @@ class SerialServer(Node):
 			line = str(self.ser.readline())
 		print("Recieved: " + line)
 	def serial_listener_callback(self, msg):
-		#NOTE: 
-		# For some reason, arduino sends back null byte (0b'' or Oxff) back after the first call to ser.write
-		# If the statement in "try" executes when this happens, it causes this error which crashes the program:
-		# UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte
-		# To prevent this, I added the try-except blocks to prevent the program from crashing
-		# If a null byte is sent, "except" is called which prevents the program from crashing
 		self.get_logger().info("Topic received linear x = %3.2f" % (msg.linear.x))
 		self.dump_msg(msg)
 
