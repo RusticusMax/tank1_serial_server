@@ -39,30 +39,39 @@ class SerialServer(Node):
 		self.turn_left_cmd = self.get_param_str('turn_left_cmd')
 		self.turn_right_cmd = self.get_param_str('turn_right_cmd')
 		self.stop_cmd = self.get_param_str('stop_cmd')
+		# Open serial port
 		self.ser = serial.Serial(self.device_name,
                            115200, #Note: Baud Rate must be the same in the arduino program, otherwise signal is not recieved!
                            timeout=.1)
-		
+		## Listen for twist messages
 		self.subscriber = self.create_subscription(Twist, 
                                               self.wheel_topic_name, 
-                                              self.serial_listener_callback, 
+                                              self.twist_listener_callback, 
                                               10)
 		self.subscriber # prevent unused variable warning
 		self.ser.reset_input_buffer()
 		self.get_logger().info("serial_server *V10 initialized @115200")
+	
+	## Get a float from the serial port
 	def get_param_float(self, name):
 		try:
 			return float(self.get_parameter(name).get_parameter_value().double_value)
 		except:
 			pass
+	
+	## Get a string from the serial port
 	def get_param_str(self, name):
 		try:
 			return self.get_parameter(name).get_parameter_value().string_value
 		except:
 			pass
+	
+	## Write to the serial port
 	def send_cmd(self, cmd):
 		print("Sending: " + cmd)
 		self.ser.write(bytes(cmd,'utf-8'))
+
+	## See what on the serial port
 	def recieve_cmd(self):
 		#NOTE: 
 		# For some reason, arduino sends back null byte (0b'' or Oxff) back after the first call to ser.write
@@ -78,7 +87,9 @@ class SerialServer(Node):
 			#if normal way doesn't work, try getting binary representation to see what went wrong
 			line = str(self.ser.readline())
 		print("Recieved: " + line)
-	def serial_listener_callback(self, msg):
+
+	# listening on twist topic
+	def twist_listener_callback(self, msg):
 		self.get_logger().info("Topic received linear x = %3.2f" % (msg.linear.x))
 		self.dump_msg(msg)
 
@@ -109,8 +120,12 @@ class SerialServer(Node):
 		if msg == Twist():
 			self.send_cmd(self.stop_cmd)
 			self.recieve_cmd()
+	
 	def dump_msg(self, msg):
 		self.get_logger().info("L: %3.2fx %3.2fy %3.2fz  A: %3.2fx %3.2fy %3.2fz" % (msg.linear.x, msg.linear.y, msg.linear.z, msg.angular.x, msg.angular.y, msg.angular.z))
+	
+	# linear.x is speed mangle it for the serial side.  This is due to the units used by teleoptwist_keyboard.
+	# Serial side units 
 	def twist2Cmd(self, msg):
 		tmp = msg.linear.x * 100
 		if(tmp > 500.0):
